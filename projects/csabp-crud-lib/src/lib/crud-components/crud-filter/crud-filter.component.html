@@ -1,0 +1,79 @@
+<p-dialog [visible]="true" [modal]="true" class="p-fluid p-dialog-md p-dialog-no-overflow" (visibleChange)="closeDialog()">
+  <ng-template pTemplate="header">
+    <div>
+        <span class="p-dialog-title">
+          {{'::filterTitle' | abpLocalization}}
+        </span>
+      <div class="p-text-secondary font-sm">
+        {{'::filterSubTitle' | abpLocalization}}
+      </div>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="content">
+    <div class="p-4 pt-1 pb-0">
+      <form *ngIf="filterForm" [formGroup]="filterForm">
+        <div class="grid">
+          <ng-container *ngFor="let item of filterElements; let i = index">
+            <div *ngIf="item.dataType === signatureDataTypeEnum.Boolean"
+                 class="col-4 field p-switch__container">
+
+              <label for="{{item.name}}" class="p-switch__label">
+                {{(item.name === 'isActive' ? '::' : localizationPrefix + ':') + item.name | abpLocalization}}
+              </label>
+
+              <!-- if data is boolean -->
+              <p-inputSwitch *ngIf="item.dataType === signatureDataTypeEnum.Boolean" [id]="item.name" formControlName="{{item.name}}"
+                             [ngClass]="{'ng-invalid ng-dirty' : filterForm.controls[item.name]?.invalid}">
+              </p-inputSwitch>
+
+            </div>
+          </ng-container>
+        </div>
+        <div class="grid">
+          <ng-container *ngFor="let item of filterElements; let i = index">
+            <div *ngIf="item.dataType !== signatureDataTypeEnum.Boolean"
+                 class="col-4 field"
+                 [class.p-switch__container]="item.dataType === signatureDataTypeEnum.Boolean" >
+
+              <label *ngIf="item.dataType !== signatureDataTypeEnum.LText" for="{{item.name}}"
+                     [class.p-switch__label]="item.dataType === signatureDataTypeEnum.Boolean">
+                {{(item.name === 'names' ? '::' : localizationPrefix + ':') + item.name | abpLocalization}}
+              </label>
+
+
+              <!-- if item data is text -->
+              <input *ngIf="item.dataType === signatureDataTypeEnum.String" [id]="item.name" pInputText formControlName="{{item.name}}"
+                     [ngClass]="{'ng-invalid ng-dirty' : filterForm.controls[item.name]?.invalid}"/>
+
+              <!-- if data is number / decimal -->
+              <p-inputNumber *ngIf="item.dataType === signatureDataTypeEnum.Integer || item.dataType === signatureDataTypeEnum.Decimal" [id]="item.name" [showButtons]="false" formControlName="{{item.name}}"
+                             [ngClass]="{'ng-invalid ng-dirty' : filterForm.controls[item.name]?.invalid}">
+              </p-inputNumber>
+
+              <!-- if data is lookup / enum -->
+              <p-dropdown *ngIf="item.dataType === signatureDataTypeEnum.Enum || item.dataType === signatureDataTypeEnum.Lookup"
+                          [id]="item.name" appendTo="body"
+                          [options]="item.entityLiteDto" optionLabel="label" optionValue="id"
+                          [ngClass]="{'ng-invalid ng-dirty' : filterForm.controls[item.name]?.invalid}"
+                          formControlName="{{item.name}}" placeholder="{{'::selectData' | abpLocalization}}" [showClear]="true"></p-dropdown>
+
+              <!-- if data is DateTime -->
+              <p-calendar *ngIf="item.dataType === signatureDataTypeEnum.Date"
+                          icon="fa fa-calendar-check-o"
+                          styleClass="d-flex" showIcon="true" [dateFormat]="commonService.constants.standardPickerDateFormat"
+                          formControlName="{{item.name}}" [id]="item.name"></p-calendar>
+
+            </div>
+          </ng-container>
+        </div>
+      </form>
+    </div>
+
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="{{'::cancel' | abpLocalization}}" class="p-button-outlined p-button-warning" (click)="closeDialog()"></button>
+    <button pButton pRipple label="{{'::search' | abpLocalization}}" class="ml-0 mr-0" (click)="filter()"></button>
+  </ng-template>
+</p-dialog>
+

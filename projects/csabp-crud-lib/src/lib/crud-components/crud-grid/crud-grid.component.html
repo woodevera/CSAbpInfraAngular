@@ -1,0 +1,137 @@
+<div class="card h-full">
+  <h5 class="card-title">{{ title | abpLocalization}}</h5>
+  <div class="card-subtitle ">{{ subTitle | abpLocalization}}</div>
+  <div class="mb-2 mt-2 d-flex justify-content-between">
+    <div>
+      <button pButton icon="pi pi-plus" (click)="add()" label="{{ localizationPrefix + ':addTitle' | abpLocalization}}" class="p-button-text cursor-pointer"></button>
+      <button pButton icon="pi pi-filter" (click)="isFilterVisible = true" label="{{'::filter' | abpLocalization}}" class="p-button-text cursor-pointer"></button>
+    </div>
+    <div>
+      <ng-container *ngFor="let item of filterElements">
+        <ng-container *ngIf="item?.value">
+          <p-chip *ngIf="item.dataType !== signatureDataTypeEnum.LText" label="{{ localizationPrefix + ':' + item.name | abpLocalization}} : {{item.value}}"
+                  (onRemove)="filterElements = gridService.removeCrudFilter(item.name , filterDto , filterElements);"  [removable]="true"></p-chip>
+          <p-chip *ngIf="item.dataType === signatureDataTypeEnum.LText && (item.value['primaryText'] || item.value['secondaryText'] || item.value['thirdText'])" label="{{ localizationPrefix + ':' + item.name | abpLocalization}} : {{item.value | lText}}"
+                  (onRemove)="filterElements = gridService.removeCrudFilter(item.name , filterDto , filterElements);"  [removable]="true"></p-chip>
+        </ng-container>
+      </ng-container>
+    </div>
+    <div class="p-grid-controls p-grid-controls-reversed">
+      <button pButton icon="pi pi-chevron-left" pTooltip="{{'::previous' | abpLocalization}}" tooltipPosition="bottom" (click)="gridService.prev()" [disabled]="gridService.isFirstPage()" class="p-button-text"></button>
+      <button pButton icon="pi pi-refresh" pTooltip="{{'::reset' | abpLocalization}}" tooltipPosition="bottom" (click)="gridService.reset()" class="p-button-text"></button>
+      <button pButton icon="pi pi-chevron-right" pTooltip="{{'::next' | abpLocalization}}" tooltipPosition="bottom" (click)="gridService.next()" [disabled]="gridService.isLastPage()" class="p-button-text"></button>
+    </div>
+  </div>
+
+  <p-table [value]="gridData" dataKey="id" [paginator]="true" [rows]="gridService.defaultRows" [scrollable]="true"
+           [loading]="gridService.loading" [totalRecords]="gridService.totalCount" [rowsPerPageOptions]="gridService.defaultRowsOptions"
+           [lazy]="true" (onLazyLoad)="loadData($event)" >
+    <ng-template pTemplate="header">
+      <tr>
+        <ng-container *ngFor="let item of gridFields; let i = index">
+          <th *ngIf="i === 0" pFrozenColumn
+              [alignFrozen]="isRtl ?  'right' : ''"
+              [class.right-0]="isRtl"
+              [class.table--lText]="item.dataType === signatureDataTypeEnum.LText">
+            {{localizationPrefix + ':' + item.name | abpLocalization}}
+          </th>
+          <th *ngIf="i > 0" [class.table--lText]="item.dataType === signatureDataTypeEnum.LText">
+            {{localizationPrefix + ':' + item.name | abpLocalization}}
+          </th>
+        </ng-container>
+        <th pFrozenColumn [class.left-0]="isRtl" [alignFrozen]="isRtl ?  '' : 'right'" class="table--actions"></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-dataItem>
+      <tr>
+        <ng-container *ngFor="let item of gridFields;let i = index">
+          <!-- if data is LText -->
+          <ng-container *ngIf="i === 0" >
+
+            <!-- if data is enum based -->
+            <td *ngIf="item.dataType === signatureDataTypeEnum.Enum"
+                [alignFrozen]="isRtl ?  'right' : ''" pFrozenColumn
+                [class.right-0]="isRtl">
+              {{ dataItem[item.name] | extractFlagsFromEntityLite: item.entityLiteDto : item.enumName }}
+            </td>
+
+            <td *ngIf="item.dataType === signatureDataTypeEnum.Lookup"
+                [alignFrozen]="isRtl ?  'right' : ''" pFrozenColumn
+                [class.right-0]="isRtl">
+              {{ dataItem[item.name] | extractFlagsFromEntityLite: item.entityLiteDto }}
+            </td>
+
+            <!-- if data is primitive -->
+            <td *ngIf="item.dataType | isPrimitive"
+                [alignFrozen]="isRtl ?  'right' : ''" pFrozenColumn
+                [class.right-0]="isRtl">
+              {{dataItem[item.name]}}
+            </td>
+
+          </ng-container>
+          <ng-container *ngIf="i > 0" >
+
+            <!-- if data is enum based -->
+            <td *ngIf="item.dataType === signatureDataTypeEnum.Enum">
+              {{ dataItem[item.name] | extractFlagsFromEntityLite: item.entityLiteDto : item.enumName }}
+            </td>
+
+            <td *ngIf="item.dataType === signatureDataTypeEnum.Lookup">
+              {{ dataItem[item.name] | extractFlagsFromEntityLite: item.entityLiteDto }}
+            </td>
+
+            <!-- if data is primitive -->
+            <td *ngIf="item.dataType | isPrimitive" >
+              {{dataItem[item.name]}}
+            </td>
+
+            <td *ngIf="item.dataType === signatureDataTypeEnum.Boolean">
+              <label class="active-label" [class.active-label__on] = "dataItem[item.name]" [class.active-label__off] = "!dataItem[item.name]">
+                {{(dataItem[item.name] ? '::active' : '::inActive') | abpLocalization}}
+              </label>
+            </td>
+
+          </ng-container>
+        </ng-container>
+        <td pFrozenColumn [class.left-0]="isRtl"  [alignFrozen]="isRtl ?  '' : 'right'" class="table--actions">
+          <span class="p-grid-controls p-grid-controls-sm">
+            <button pButton icon="pi pi-eye" class="p-button-text p-button-secondary" pTooltip="{{'::view' | abpLocalization}}" tooltipPosition="bottom"
+                    (click)="view(dataItem)">
+            </button>
+            <button pButton icon="pi pi-pencil" class="p-button-text" pTooltip="{{'::edit' | abpLocalization}}" tooltipPosition="bottom"
+                    (click)="edit(dataItem)"></button>
+            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" pTooltip="{{'::delete' | abpLocalization}}" tooltipPosition="bottom"
+                    (click)="delete(dataItem)" ></button>
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<app-crud-filter *ngIf="isFilterVisible"
+                 (closeEvent)="isFilterVisible = false"
+                 (filterEvent)="afterFilter($event)"
+                 (filterElementsEvent)="filterElements = $event;"
+                 (close)="isFilterVisible = false"
+                 [filterElements]="filterElements"
+                 [localizationPrefix]="localizationPrefix"
+                 [filterDto]="filterDto">
+</app-crud-filter>
+
+<app-crud-form *ngIf="isFormVisible"
+               [dto]="selectedDto"
+               [formMode]="formMode"
+               [localizationPrefix]="localizationPrefix"
+               [formElements]="formElements"
+               [formService]="crudService"
+               [addTitle]="addTitle"
+               [addSubTitle]="addSubTitle"
+               [editTitle]="editTitle"
+               [editSubTitle]="editSubTitle"
+               [viewTitle]="viewTitle"
+               [viewSubTitle]="viewSubTitle"
+               (closeEvent)="isFormVisible = false;"
+               (saveEvent)="reloadData()"></app-crud-form>
+
+<p-confirmDialog [style]="{width: '50vw'}" key="deleteDialog" [baseZIndex]="20000" rejectButtonStyleClass="p-button-outlined"></p-confirmDialog>
